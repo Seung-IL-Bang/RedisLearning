@@ -19,6 +19,7 @@ public class UserService {
 
     public UserProfile getUserProfile(String userId) throws InterruptedException {
 
+        // name => 애너테이션 없이 로직으로 캐싱 작성
         ValueOperations<String, String> ops = stringRedisTemplate.opsForValue();
         String userName = null;
         int userAge = 0;
@@ -27,13 +28,15 @@ public class UserService {
         String cachedname = ops.get("nameKey: " + userId);
 
         if (cachedname != null) {
+            // Cache Hit
             userName = cachedname;
         } else {
             // Cache miss 로 인한 DB 로부터 원본 데이터 가져오기 (Thread.sleep)
             userName = externalApiService.getUserName(userId);
-            ops.set("nameKey: " + userId, userName, 5, TimeUnit.SECONDS);
+            ops.set("nameKey: " + userId, userName, 10, TimeUnit.SECONDS);
         }
 
+        // age => Cacheable 애너테이션 적용
         userAge = externalApiService.getUserAge(userId);
 
         return new UserProfile(userName, userAge);
